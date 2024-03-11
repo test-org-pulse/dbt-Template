@@ -1,0 +1,4 @@
+variables:
+  PROJECT_ID: "insightsprod"
+  SERVICE_ACCOUNT: $SERVICE_ACCOUNT_PROD
+  UPDATE_PACKAGE_TOPIC: "pulse-update-packages"

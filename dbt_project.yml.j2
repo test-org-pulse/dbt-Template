@@ -1,0 +1,28 @@
+name: "{{ project_name }}"
+version: "1.0.0"
+config-version: 2
+profile: "{{ profile }}"
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+vars:
+  client_id: "{{ client_id }}"
+  raw_database: "{{ raw_database }}"
+  raw_schema: "{{ project_name }}_raw"
+  mdl_database: "{{ raw_database }}"
+  mdl_schema: "{{ project_name }}_prerequisites"
+  prerequisite_mdl_database: "{{ raw_database }}"
+  prerequisite_mdl_schema: "{{ project_name }}_prerequisites"
+  shared_schema: "{{ shared_schema }}"
+  default_ddl_schema: "{{ default_ddl_schema }}"
+  product_details_gs_flag: false
+  currency_conversion_flag: false
+
+models:
+  {{ project_name }}:

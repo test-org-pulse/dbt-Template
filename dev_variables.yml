@@ -1,0 +1,4 @@
+variables:
+  PROJECT_ID: "solutionsdw"
+  SERVICE_ACCOUNT: $SERVICE_ACCOUNT_DEV
+  UPDATE_PACKAGE_TOPIC: "pulse-update-packages"

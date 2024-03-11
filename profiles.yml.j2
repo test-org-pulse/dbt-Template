@@ -1,0 +1,31 @@
+{{ profile }}:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      keyfile: /home/airflow/gcs/dags/{{ profile }}/keyfile.json
+      project: solutionsdw
+      dataset: {{ profile }}
+      location: us-central1
+      threads: 1
+      retries: 1
+    cicd:
+      type: bigquery
+      method: service-account
+      keyfile: keyfile.json
+      project: {{ project_id }}
+      dataset: {{ profile }}
+      location: us-central1
+      threads: 1
+      retries: 1
+    dag:
+      type: bigquery
+      method: service-account
+      keyfile: /home/airflow/gcs/dags/{{ profile }}/keyfile.json
+      project: {{ project_id }}
+      dataset: {{ profile }}
+      location: us-central1
+      threads: 4
+      retries: 1
+

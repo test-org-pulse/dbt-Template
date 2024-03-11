@@ -1,0 +1,46 @@
+include:
+  - local: "dev_variables.yml"
+    rules:
+      - if: '$CI_COMMIT_BRANCH != "main"'
+  - local: "prod_variables.yml"
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+
+stages:
+  - deploy
+
+send-package-update-message:
+  stage: deploy
+  image: google/cloud-sdk
+  before_script:
+    - apt-get update && apt-get install -y jq
+  script:
+    - echo "Creating service account JSON file..."
+    - echo $SERVICE_ACCOUNT > service-account.json
+    - gcloud auth activate-service-account --key-file=service-account.json
+    - gcloud config set project $PROJECT_ID
+    - echo "Project ID - $PROJECT_ID"
+    - gcloud config set functions/region us-central1
+    - echo "Querying BigQuery for client IDs and names..."
+    - >
+      bq query --format=json --use_legacy_sql=false \
+        "SELECT DISTINCT c.client_id, c.client_name \
+        FROM \`${PROJECT_ID}.edm_insights_metadata.client_git\` AS cg \
+        LEFT JOIN \`${PROJECT_ID}.edm_insights_metadata.client\` AS c USING (client_id) \
+        WHERE updated_by_user = False" | awk '/^\[/{p=1}p' > query_results.json
+    - cat query_results.json
+    - echo "Sending a Pub/Sub message on packages.yml change..."
+    - >
+      cat query_results.json | jq -c '.[] | {client_id, client_name}' | while read -r line; do
+        client_id=$(echo $line | jq -r '.client_id')
+        client_name=$(echo $line | jq -r '.client_name')
+        echo "Publishing message: Client ID: $client_id, Client Name: $client_name, DBT Template Repo Branch: $CI_COMMIT_BRANCH"
+        gcloud pubsub topics publish $UPDATE_PACKAGE_TOPIC --message "{\"client_id\": \"$client_id\", \"client_name\": \"$client_name\", \"update_package\": true, \"dbt_template_repo_branch\": \"$CI_COMMIT_BRANCH\"}"
+      done
+  rules:
+    - if: '($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop") && $CI_COMMIT_MESSAGE !~ /skip-ci/'
+      changes:
+        - packages.yml
+        - .gitlab-ci.yml
+        - dev_variables.yml
+        - prod_variables.yml
